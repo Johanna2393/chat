@@ -78,6 +78,7 @@
     color: #fff;
     border-top-right-radius: 4px;
   }
+  .msg a { color: var(--azul); text-decoration: underline; word-break: break-all; }
   .msg ul { margin: 4px 0 0; padding-left: 20px; }
   .msg li { margin: 2px 0; }
   .campo { margin: 0 0 10px; }
@@ -506,6 +507,28 @@ function clasificar(t) {
 }
 
 /* ---------- Render ---------- */
+/* Escribe texto en un elemento y convierte las URLs en enlaces clicables */
+function ponerTextoConLinks(el, texto) {
+  const re = /(https?:\/\/[^\s<>"']+)/g;
+  let ultimo = 0, m;
+  texto = String(texto == null ? '' : texto);
+  while ((m = re.exec(texto)) !== null) {
+    let url = m[0];
+    /* no incluir puntuación final (. , ; : ) ) dentro del enlace */
+    const fin = url.match(/[.,;:!?)]+$/);
+    if (fin) url = url.slice(0, -fin[0].length);
+    if (m.index > ultimo) el.appendChild(document.createTextNode(texto.slice(ultimo, m.index)));
+    const a = document.createElement('a');
+    a.href = url;
+    a.textContent = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    el.appendChild(a);
+    ultimo = m.index + url.length;
+    re.lastIndex = ultimo;
+  }
+  if (ultimo < texto.length) el.appendChild(document.createTextNode(texto.slice(ultimo)));
+}
 function agregarMensaje(clase) {
   const div = document.createElement('div');
   div.className = 'msg ' + clase;
@@ -520,7 +543,7 @@ function mensajeUsuario(texto) {
 }
 
 function mensajeBotTexto(texto) {
-  agregarMensaje('bot').textContent = texto;
+  ponerTextoConLinks(agregarMensaje('bot'), texto);
   bajar();
 }
 
@@ -531,7 +554,7 @@ function campo(contenedor, titulo, valor) {
   b.textContent = titulo + ': ';
   p.appendChild(b);
   if (valor) {
-    p.appendChild(document.createTextNode(valor));
+    ponerTextoConLinks(p, valor);
   } else {
     const s = document.createElement('span');
     s.className = 'pendiente';
@@ -555,7 +578,7 @@ function mensajeBotEtapa(item) {
     const ul = document.createElement('ul');
     item.requisitos.forEach(function (r) {
       const li = document.createElement('li');
-      li.textContent = r;
+      ponerTextoConLinks(li, r);
       ul.appendChild(li);
     });
     req.appendChild(ul);
@@ -579,7 +602,7 @@ function mensajeBotFaq(item) {
   const r = document.createElement('div');
   r.className = 'campo';
   r.style.whiteSpace = 'pre-line';
-  r.textContent = item.respuesta;
+  ponerTextoConLinks(r, item.respuesta);
   div.appendChild(r);
   bajar();
 }
@@ -592,7 +615,7 @@ function mensajeBotLista(titulo, lineas, cierre) {
   const ul = document.createElement('ul');
   lineas.forEach(function (l) {
     const li = document.createElement('li');
-    li.textContent = l;
+    ponerTextoConLinks(li, l);
     ul.appendChild(li);
   });
   div.appendChild(ul);
@@ -600,7 +623,7 @@ function mensajeBotLista(titulo, lineas, cierre) {
     const p = document.createElement('div');
     p.className = 'campo';
     p.style.marginTop = '10px';
-    p.textContent = cierre;
+    ponerTextoConLinks(p, cierre);
     div.appendChild(p);
   }
   bajar();
